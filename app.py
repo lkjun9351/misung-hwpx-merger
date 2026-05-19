@@ -43,6 +43,9 @@ def merge():
         return jsonify({'error': 'Unauthorized'}), 401
     
     files = request.files.getlist('files')
+    print(f"[merge] received {len(files)} files", flush=True)
+    for i, f in enumerate(files):
+        print(f"[merge] file[{i}]: name={f.filename}", flush=True)
     if len(files) < 1:
         return jsonify({'error': '파일이 없습니다'}), 400
     
