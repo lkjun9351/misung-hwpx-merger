@@ -156,9 +156,18 @@ def merge_hwpx_files(file_paths, work_dir):
     update_content_hpf(base_dir)
     
     # 4) zip 묶기
+    # 4) zip 묶기
     out_path = os.path.join(work_dir, 'merged.hwpx')
     print(f"[merge_hwpx] creating zip: {out_path}", flush=True)
     create_hwpx_zip(base_dir, out_path)
+    
+    # zip 내용 확인
+    with zipfile.ZipFile(out_path, 'r') as z:
+        names = z.namelist()
+        print(f"[merge_hwpx] result zip has {len(names)} files:", flush=True)
+        for n in sorted(names):
+            info = z.getinfo(n)
+            print(f"[merge_hwpx]   {n} ({info.file_size} bytes)", flush=True)
     
     return out_path
 
