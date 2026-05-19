@@ -223,8 +223,10 @@ def update_content_hpf(base_dir):
                 })
     print(f"[update_hpf] bindata: {len(bindata_files)} files", flush=True)
     
-    hpf = re.sub(r'<opf:item\s+id="section\d+"[^/]*/>\s*', '', hpf)
-    hpf = re.sub(r'<opf:item\s+id="image\d+"[^/]*/>\s*', '', hpf)
+    # manifest 재구성 — 기존 section/image 항목 모두 제거
+    # 속성 순서/공백 관계없이 매칭
+    hpf = re.sub(r'<opf:item[^>]*\bid="section\d+"[^>]*/>\s*', '', hpf)
+    hpf = re.sub(r'<opf:item[^>]*\bid="image\d+"[^>]*/>\s*', '', hpf)
     
     new_items = ''
     for sec_idx in sections:
@@ -234,7 +236,8 @@ def update_content_hpf(base_dir):
     
     hpf = re.sub(r'(</opf:manifest>)', new_items + r'\1', hpf, count=1)
     
-    hpf = re.sub(r'<opf:itemref\s+idref="section\d+"\s*/>\s*', '', hpf)
+    # spine 재구성 — 기존 section 참조 모두 제거 (linear 속성 포함)
+    hpf = re.sub(r'<opf:itemref[^>]*\bidref="section\d+"[^>]*/>\s*', '', hpf)
     new_spine = ''
     for sec_idx in sections:
         new_spine += f'<opf:itemref idref="section{sec_idx}"/>'
