@@ -21,7 +21,7 @@ def index():
     return jsonify({
         'service': 'misung-hwpx-merger',
         'status': 'running',
-        'version': '2.1.0'
+        'version': '2.2.0'
     })
 
 
@@ -223,31 +223,47 @@ def update_content_hpf(base_dir):
                 })
     print(f"[update_hpf] bindata: {len(bindata_files)} files", flush=True)
     
-    # manifest 재구성 — 기존 section/image 항목 모두 제거
-    # 속성 순서/공백 관계없이 매칭
-    hpf = re.sub(r'<opf:item[^>]*\bid="section\d+"[^>]*/>\s*', '', hpf)
-    hpf = re.sub(r'<opf:item[^>]*\bid="image\d+"[^>]*/>\s*', '', hpf)
+    # 기존 section/image 항목 제거 (속성 순서 무관)
+    before_section_count = len(re.findall(r'<opf:item[^>]*id="section\d+"', hpf))
+    before_image_count = len(re.findall(r'<opf:item[^>]*id="image\d+"', hpf))
+    print(f"[update_hpf] BEFORE removal: section items={before_section_count}, image items={before_image_count}", flush=True)
     
+    # 더 강력한 패턴
+    hpf = re.sub(r'<opf:item[^/>]*id="section\d+"[^/>]*/>', '', hpf)
+    hpf = re.sub(r'<opf:item[^/>]*id="image\d+"[^/>]*/>', '', hpf)
+    
+    after_section_count = len(re.findall(r'<opf:item[^>]*id="section\d+"', hpf))
+    after_image_count = len(re.findall(r'<opf:item[^>]*id="image\d+"', hpf))
+    print(f"[update_hpf] AFTER removal: section items={after_section_count}, image items={after_image_count}", flush=True)
+    
+    # 새 manifest 항목 만들기
     new_items = ''
     for sec_idx in sections:
         new_items += f'<opf:item id="section{sec_idx}" href="Contents/section{sec_idx}.xml" media-type="application/xml"/>'
     for b in bindata_files:
-        new_items += f'<opf:item id="{b["id"]}" href="{b["href"]}" media-type="{b["type"]}"/>'
+        new_items += f'<opf:item id="{b["id"]}" href="{b["href"]}" media-type="{b["type"]}" isEmbeded="1"/>'
     
     hpf = re.sub(r'(</opf:manifest>)', new_items + r'\1', hpf, count=1)
     
-    # spine 재구성 — 기존 section 참조 모두 제거 (linear 속성 포함)
-    hpf = re.sub(r'<opf:itemref[^>]*\bidref="section\d+"[^>]*/>\s*', '', hpf)
+    # spine 재구성
+    before_spine_count = len(re.findall(r'<opf:itemref[^>]*idref="section\d+"', hpf))
+    print(f"[update_hpf] BEFORE spine removal: {before_spine_count}", flush=True)
+    
+    hpf = re.sub(r'<opf:itemref[^/>]*idref="section\d+"[^/>]*/>', '', hpf)
+    
+    after_spine_count = len(re.findall(r'<opf:itemref[^>]*idref="section\d+"', hpf))
+    print(f"[update_hpf] AFTER spine removal: {after_spine_count}", flush=True)
+    
     new_spine = ''
     for sec_idx in sections:
-        new_spine += f'<opf:itemref idref="section{sec_idx}"/>'
+        new_spine += f'<opf:itemref idref="section{sec_idx}" linear="yes"/>'
     hpf = re.sub(r'(</opf:spine>)', new_spine + r'\1', hpf, count=1)
     
     with open(hpf_path, 'w', encoding='utf-8') as f:
         f.write(hpf)
     
     print(f"[update_hpf] hpf size after: {len(hpf)}", flush=True)
-    print(f"[update_hpf] hpf content:\n{hpf}", flush=True)
+    print(f"[update_hpf] FINAL hpf content:\n{hpf}", flush=True)
 
 
 def create_hwpx_zip(base_dir, out_path):
