@@ -147,6 +147,7 @@ def merge_hwpx_files(file_paths, work_dir):
                 with open(dst_section, 'w', encoding='utf-8') as f:
                     f.write(xml)
                 print(f"[merge_hwpx]   {name} -> {dst_name} ({len(xml)} chars)", flush=True)
+                print(f"[merge_hwpx]   first 500 chars: {xml[:500]}", flush=True)
                 next_section_idx += 1
     
     print(f"[merge_hwpx] final: total sections={next_section_idx}", flush=True)
@@ -243,6 +244,7 @@ def update_content_hpf(base_dir):
         f.write(hpf)
     
     print(f"[update_hpf] hpf size after: {len(hpf)}", flush=True)
+    print(f"[update_hpf] hpf content:\n{hpf}", flush=True)
 
 
 def create_hwpx_zip(base_dir, out_path):
