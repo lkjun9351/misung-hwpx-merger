@@ -21,7 +21,7 @@ def index():
     return jsonify({
         'service': 'misung-hwpx-merger',
         'status': 'running',
-        'version': '2.2.0'
+        'version': '2.3.0'
     })
 
 
@@ -86,10 +86,26 @@ def merge_hwpx_files(file_paths, work_dir):
         z.extractall(base_dir)
     
     # 첫 파일 구조 확인
+    # 첫 파일 구조 확인
     contents_dir = os.path.join(base_dir, 'Contents')
     if os.path.isdir(contents_dir):
         files_in_contents = os.listdir(contents_dir)
         print(f"[merge_hwpx] base Contents/: {files_in_contents}", flush=True)
+    
+    # header.xml 분석
+    header_path = os.path.join(contents_dir, 'header.xml')
+    if os.path.exists(header_path):
+        header_xml = open(header_path, encoding='utf-8').read()
+        print(f"[merge_hwpx] header.xml size: {len(header_xml)} chars", flush=True)
+        # 섹션 관련 태그 찾기
+        sec_cnt_match = re.search(r'<hh:secCnt[^/]*/>|<hh:secCnt[^>]*>[^<]*</hh:secCnt>', header_xml)
+        if sec_cnt_match:
+            print(f"[merge_hwpx] header secCnt: {sec_cnt_match.group(0)}", flush=True)
+        # head 태그 안 시작 부분 출력
+        head_match = re.search(r'<hh:head[^>]*>(.*?)<hh:beginNum', header_xml, re.S)
+        if head_match:
+            preview = head_match.group(0)[:1000]
+            print(f"[merge_hwpx] header head preview: {preview}", flush=True)
     
     next_section_idx = count_sections(base_dir)
     next_image_id = get_max_image_id(base_dir) + 1
